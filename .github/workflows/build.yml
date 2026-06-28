@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install system dependencies
+      - name: Install system dependencies + Java 17
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -25,6 +25,9 @@ jobs:
             python3-pip autoconf libtool pkg-config \
             zlib1g-dev libncurses5-dev libncursesw5-dev \
             cmake libffi-dev libssl-dev
+          sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+          sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
+          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
 
       - name: Install Python build tools
         run: |
@@ -38,9 +41,9 @@ jobs:
           path: |
             ~/.buildozer
             .buildozer
-          key: buildozer-${{ hashFiles('buildozer.spec') }}
+          key: buildozer-v3-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            buildozer-
+            buildozer-v3-
 
       - name: Accept Android SDK licenses
         run: |
@@ -53,6 +56,8 @@ jobs:
             > ~/.buildozer/android/platform/android-sdk/licenses/intel-android-extra-license
 
       - name: Build APK
+        env:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: |
           buildozer android debug 2>&1 | tee build.log
           ls bin/*.apk || (echo "ERROR: No APK found in bin/" && exit 1)

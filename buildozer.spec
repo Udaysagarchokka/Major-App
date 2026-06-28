@@ -8,22 +8,18 @@ source.include_exts = py,png,jpg,kv,atlas
 
 version = 1.0
 
-# Pure-Python ecdsa and qrcode are easy to package. pillow and opencv
-# both have maintained python-for-android recipes, but opencv
-# significantly increases build time and APK size — remove "opencv"
-# and the cv2 import in qr_verifier.py if your build fails, and decode
-# QR images on a PC instead for your demo if needed.
-# pyzbar is intentionally NOT included here — it needs the native
-# libzbar shared library, which has no reliable Android recipe. The
-# code already handles this: qr_verifier.py tries pyzbar only if it's
-# importable and falls back to OpenCV automatically otherwise, which
-# is exactly what happens on Android.
-requirements = python3,kivy,ecdsa,qrcode,pillow,opencv,plyer
+# opencv removed — qr_verifier.py already falls back to OpenCV-free
+# path automatically when cv2 is not importable (which is the case on
+# Android). pyzbar intentionally excluded — no reliable Android recipe.
+requirements = python3,kivy==2.3.0,ecdsa,qrcode,pillow,plyer
 
 orientation = portrait
 fullscreen = 0
 
 android.permissions = CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+android.api = 33
+android.minapi = 24
+android.archs = arm64-v8a
 
 [buildozer]
 log_level = 2

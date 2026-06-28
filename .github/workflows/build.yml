@@ -35,25 +35,44 @@ jobs:
           pip install --upgrade buildozer
           pip install --upgrade Cython==0.29.33 virtualenv wheel
 
+      - name: Set up Android SDK with sdkmanager
+        run: |
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$SDK_DIR"
+
+          # Download and install cmdline-tools (contains sdkmanager)
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip
+          mkdir -p "$SDK_DIR/cmdline-tools"
+          unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools_extracted
+          mv /tmp/cmdtools_extracted/cmdline-tools "$SDK_DIR/cmdline-tools/latest"
+
+          # Accept all licenses non-interactively
+          mkdir -p "$SDK_DIR/licenses"
+          printf "24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e\n8933bad161af4178b1185d1a37fbf41ea5269c55" \
+            > "$SDK_DIR/licenses/android-sdk-license"
+          printf "84831b9409646a918e30573bab4c9c91346d8abd" \
+            > "$SDK_DIR/licenses/android-sdk-preview-license"
+          printf "504667f4c0de7af1a06de9f4b1727b84351f2910" \
+            > "$SDK_DIR/licenses/intel-android-extra-license"
+
+          # Install platform-tools and build-tools via sdkmanager
+          SDKMANAGER="$SDK_DIR/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_DIR" "platform-tools" "build-tools;34.0.0" "platforms;android-33"
+
+          # Create legacy tools/bin/sdkmanager symlink that Buildozer expects
+          mkdir -p "$SDK_DIR/tools/bin"
+          ln -sf "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" "$SDK_DIR/tools/bin/sdkmanager"
+          ln -sf "$SDK_DIR/cmdline-tools/latest/bin/avdmanager" "$SDK_DIR/tools/bin/avdmanager"
+
       - name: Cache Buildozer dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.buildozer
             .buildozer
-          key: buildozer-v3-${{ hashFiles('buildozer.spec') }}
+          key: buildozer-v4-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            buildozer-v3-
-
-      - name: Accept Android SDK licenses
-        run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-          printf "24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e\n8933bad161af4178b1185d1a37fbf41ea5269c55" \
-            > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          printf "84831b9409646a918e30573bab4c9c91346d8abd" \
-            > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
-          printf "504667f4c0de7af1a06de9f4b1727b84351f2910" \
-            > ~/.buildozer/android/platform/android-sdk/licenses/intel-android-extra-license
+            buildozer-v4-
 
       - name: Build APK
         env:
